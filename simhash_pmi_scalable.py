@@ -12,7 +12,7 @@ import os
 import sys
 import numpy as np
 import csv
-
+from scipy.stats import ortho_group
 
 class SimHashPMI:
 
@@ -25,13 +25,14 @@ class SimHashPMI:
     temp_weight_file = "./hash_weights.txt"
     emb_file = "./temp_embedding.txt"
 
-    def __init__(self, input_dim, output_dim, chunk_size=64, dtype=np.float, verbose=False):
+    def __init__(self, input_dim, output_dim, chunk_size=64, dtype=np.float, verbose=False, proj_met="random"):
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.w = None
         self.chunk_size = chunk_size
         self.dtype = dtype
         self.verbose = verbose
+        self.proj_met = proj_met
         self._generate_projection_matrix()
 
     def _generate_projection_matrix(self):
@@ -42,7 +43,14 @@ class SimHashPMI:
 
         if self.chunk_size == self.output_dim:
 
-            self.w = np.random.normal(loc=0.0, scale=1.0, size=(self.input_dim, self.output_dim))
+            if self.proj_met  == "random":
+                self.w = np.random.normal(loc=0.0, scale=1.0, size=(self.input_dim, self.output_dim))
+            elif self.proj_met == "orthogonal":
+                print("Orthogonal matrix!")
+                self.w = ortho_group.rvs(self.input_dim)
+                self.w = self.w[:, self.output_dim]
+            else:
+                raise ValueError("Invalid method")
 
         else:
 
