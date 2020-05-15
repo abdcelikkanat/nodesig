@@ -48,7 +48,7 @@ class SimHashPMI:
             elif self.proj_met == "orthogonal":
                 print("Orthogonal matrix!")
                 self.w = ortho_group.rvs(self.input_dim)
-                self.w = self.w[:, self.output_dim]
+                self.w = self.w[:, :self.output_dim]
             else:
                 raise ValueError("Invalid method")
 
