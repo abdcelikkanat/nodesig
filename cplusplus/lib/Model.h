@@ -92,9 +92,7 @@ void Model<T>::encodeAll(Eigen::SparseMatrix<T, Eigen::RowMajor> &X, string file
             //cout << X.rows() << " " << X.cols() << endl;
             nodeProd = nodeVect * _weights;
 
-            //for(int i=0; i<_numOfNodes; i++)
-            //    cout << nodeVect.coeff(i) << endl;
-
+            fs << node << " ";
             for(unsigned int d=0; d<_dim; d++) {
                 //cout << nodeProd.coeff(d) << endl;
                 if(nodeProd.coeff(d) > 0)
