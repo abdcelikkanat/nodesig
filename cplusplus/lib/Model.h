@@ -82,6 +82,7 @@ void Model<T>::encodeAll(Eigen::SparseMatrix<T, Eigen::RowMajor> &X, string file
         Eigen::VectorXf nodeProd;
         bool e;
         Eigen::MatrixXf nodeProdX(_numOfNodes, _dim);
+        string buffer;
         //_weights.transpose();
 
         fs << _numOfNodes << " " << _dim << endl;
@@ -98,16 +99,22 @@ void Model<T>::encodeAll(Eigen::SparseMatrix<T, Eigen::RowMajor> &X, string file
             //nodeProd = nodeProdX.row(node); //nodeVect * _weights;
             nodeProd = nodeVect * _weights;
 
-            fs << node << " ";
+
+            //fs << node << " ";
+            buffer += to_string(node) + " ";
             for(unsigned int d=0; d<_dim; d++) {
                 //cout << nodeProd.coeff(d) << endl;
                 if(nodeProd.coeff(d) > 0)
-                    fs << "1 ";
+                    buffer += "1 "; //fs << "1 ";
                 else
-                    fs << "0 ";
+                    buffer += "0 "; //fs << "0 ";
             }
+            buffer += "\n"; // fs << endl;
 
-            fs << endl;
+            if((node+1) % 64 == 0 || (node+1) == _numOfNodes ) {
+                fs << buffer;
+                buffer.clear();
+            }
 
         }
         fs.close();

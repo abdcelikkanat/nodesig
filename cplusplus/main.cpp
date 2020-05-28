@@ -74,6 +74,12 @@ void scale(Eigen::SparseMatrix<float, Eigen::RowMajor> &mat) {
     auto values = mat.coeffs();
     //for(unsigned int i=0; i<values.size(); i++)
     //    cout << values[i] << endl;
+
+    // Set diagonals
+    auto diagonals = mat.diagonal();
+    for(int d=0; d<diagonals.size(); d++)
+        diagonals.coeffRef(d) = 1;
+
     minValue = values.minCoeff();
     maxValue = values.maxCoeff();
 
@@ -93,7 +99,7 @@ void scale(Eigen::SparseMatrix<float, Eigen::RowMajor> &mat) {
 
         if(rowSum != 0) {
             for(Eigen::SparseMatrix<float, Eigen::RowMajor>::InnerIterator it(mat, i); it; ++it)
-                it.valueRef() /= rowSum;
+                it.valueRef() = it.valueRef() / rowSum;
         }
     }
 
@@ -163,7 +169,11 @@ int main2() {
     cout << denek  << endl;
 
 
-
+    cout << mat << endl;
+    auto temp = mat.diagonal();
+    for(int i=0; i<temp.size(); i++)
+        temp.coeffRef(i) = 88;
+    cout << mat << endl;
 
     return 0;
 }
@@ -171,14 +181,15 @@ int main2() {
 
 int main() {
 
-    //string dataset_path = "/home/abdulkadir/Desktop/nodesig/cplusplus/tests/karate.edgelist";
-    //string embFilePath = "/home/abdulkadir/Desktop/nodesig/cplusplus/deneme.embedding";
-    string dataset_path = "/home/abdulkadir/Desktop/datasets/Homo_sapiens_renaissance.edgelist";
-    string embFilePath = "/home/abdulkadir/Desktop/nodesig/cplusplus/Homo_sapiens_renaissance.embedding";
+    string dataset_path = "/Users/abdulkadir/workspace/nodesig/cplusplus/tests/karate.edgelist";
+    //string dataset_path = "/Users/abdulkadir/workspace/datasets/Homo_sapiens_undirected.edgelist";
+    string embFilePath = "/Users/abdulkadir/workspace/nodesig/cplusplus/deneme.embedding";
+    //string dataset_path = "/home/abdulkadir/Desktop/datasets/Homo_sapiens_renaissance.edgelist";
+    //string embFilePath = "/home/abdulkadir/Desktop/nodesig/cplusplus/Homo_sapiens_renaissance.embedding";
 
     bool verbose = true;
     bool directed = false;
-    unsigned int dim = 1024*8;
+    unsigned int dim = 128;//1024*8;
     unsigned int walkLen = 5;
     float cont_prob = 0.98;
 
@@ -203,6 +214,8 @@ int main() {
 
     // Normalize the adjacency matrix
     scale(A);
+    //cout << A << endl;
+
     // Construct zero matrix
     Eigen::SparseMatrix<float, Eigen::RowMajor> X(numOfNodes, numOfNodes);
     // Construct the identity matrix
