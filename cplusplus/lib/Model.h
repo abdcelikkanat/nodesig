@@ -70,6 +70,55 @@ void Model<T>::encode(vector <Triplet <T>> x, bool *emb) {
 }
  */
 
+
+template<typename T>
+void Model<T>::encodeAll(Eigen::SparseMatrix<T, Eigen::RowMajor> &X, string filePath) {
+    //cout << "2: " << A.row(0) << endl;
+    fstream fs(filePath, fstream::out);
+    if(fs.is_open()) {
+
+        T dimSum;
+        unsigned int idx = 0;
+        Eigen::VectorXf nodeProd;
+        bool e;
+        Eigen::MatrixXf nodeProdX(_numOfNodes, _dim);
+        //_weights.transpose();
+
+        fs << _numOfNodes << " " << _dim << endl;
+
+        //cout << X.rows() << " " << X.cols() << endl;
+        //cout << _weights.rows() << " " << _weights.cols() << endl;
+        //nodeProdX = X * _weights;
+
+        for(unsigned int node=0; node<_numOfNodes; node++) {
+            Eigen::SparseVector<T, Eigen::RowMajor> nodeVect = X.row(node);
+            //cout << X.row(node) << endl;
+            //cout << nodeVect.rows() << " " << nodeVect.cols() << endl;
+            //cout << X.rows() << " " << X.cols() << endl;
+            //nodeProd = nodeProdX.row(node); //nodeVect * _weights;
+            nodeProd = nodeVect * _weights;
+
+            fs << node << " ";
+            for(unsigned int d=0; d<_dim; d++) {
+                //cout << nodeProd.coeff(d) << endl;
+                if(nodeProd.coeff(d) > 0)
+                    fs << "1 ";
+                else
+                    fs << "0 ";
+            }
+
+            fs << endl;
+
+        }
+        fs.close();
+
+    } else {
+        cout << "An error occurred during opening the file!" << endl;
+    }
+
+}
+
+/*
 template<typename T>
 void Model<T>::encodeAll(Eigen::SparseMatrix<T, Eigen::RowMajor> &X, string filePath) {
     //cout << "2: " << A.row(0) << endl;
@@ -112,7 +161,9 @@ void Model<T>::encodeAll(Eigen::SparseMatrix<T, Eigen::RowMajor> &X, string file
 
 }
 
-/*
+
+
+
 template<typename T>
 void Model<T>::encodeAll(Eigen::Triplet<T> &x, string filePath) {
 
