@@ -5,6 +5,8 @@
 #include <sstream>
 #include <fstream>
 #include <string>
+#include <Eigen/Sparse>
+#include <Eigen/Dense>
 #include "Graph.h"
 
 using namespace std;
@@ -14,17 +16,43 @@ class Model {
 private:
     unsigned int _dim;
     unsigned int _numOfNodes;
-    float **_weights;
+    Eigen::MatrixXf _weights;
 public:
 
-    Model(unsigned int numTOfNodes, unsigned int dim);
+    Model(unsigned int numOfNodes, unsigned int dim);
     ~Model();
-    void encode(vector <Triplet <T>> x, bool *emb);
-    void encodeAll(vector <Triplet <T>> &x, string filePath);
+    //void encode(vector <Triplet <T>> x, bool *emb);
+    void encodeAll(Eigen::SparseMatrix<T, Eigen::RowMajor> &X, string filePath);
     random_device _rd;
 
 };
 
+
+template<typename T>
+Model<T>::Model(unsigned int numOfNodes, unsigned int dim) {
+
+    this->_dim = dim;
+    this->_numOfNodes = numOfNodes;
+
+
+    this->_weights.resize(this->_numOfNodes, this->_dim );
+    // Sample numbers from normal distribution
+    default_random_engine generator(this->_rd());
+    normal_distribution<T> distribution(0.0, 1.0);
+    for (int i=0; i < this->_numOfNodes; i++) {
+        for (int j=0; j < this->_dim; j++) {
+            this->_weights(i, j) = distribution(generator);
+        }
+    }
+
+}
+
+template<typename T>
+Model<T>::~Model() {
+
+}
+
+/*
 template<typename T>
 void Model<T>::encode(vector <Triplet <T>> x, bool *emb) {
 
@@ -39,9 +67,55 @@ void Model<T>::encode(vector <Triplet <T>> x, bool *emb) {
     }
 
 }
+ */
 
 template<typename T>
-void Model<T>::encodeAll(vector <Triplet<T>> &x, string filePath) {
+void Model<T>::encodeAll(Eigen::SparseMatrix<T, Eigen::RowMajor> &X, string filePath) {
+
+    fstream fs(filePath, fstream::out);
+    if(fs.is_open()) {
+
+        T dimSum;
+        unsigned int idx = 0;
+        Eigen::VectorXf nodeProd;
+        bool e;
+
+        //_weights.transpose();
+
+        fs << _numOfNodes << " " << _dim << endl;
+
+        for(unsigned int node=0; node<_numOfNodes; node++) {
+            Eigen::SparseVector<T, Eigen::RowMajor> nodeVect = X.row(node);
+            //cout << X.row(node) << endl;
+            //cout << nodeVect.rows() << " " << nodeVect.cols() << endl;
+            //cout << X.rows() << " " << X.cols() << endl;
+            nodeProd = nodeVect * _weights;
+
+            //for(int i=0; i<_numOfNodes; i++)
+            //cout << nodeVect.nonZeros() << endl;
+
+            for(unsigned int d=0; d<_dim; d++) {
+                //cout << nodeProd.coeff(d) << endl;
+                if(nodeProd.coeff(d) > 0)
+                    fs << "1 ";
+                else
+                    fs << "0 ";
+            }
+
+            fs << endl;
+
+        }
+        fs.close();
+
+    } else {
+        cout << "An error occurred during opening the file!" << endl;
+    }
+
+}
+
+/*
+template<typename T>
+void Model<T>::encodeAll(Eigen::Triplet<T> &x, string filePath) {
 
     fstream fs(filePath, fstream::out);
     if(fs.is_open()) {
@@ -80,7 +154,9 @@ void Model<T>::encodeAll(vector <Triplet<T>> &x, string filePath) {
     }
 
 }
+*/
 
+/*
 template<typename T>
 Model<T>::Model(unsigned int numOfNodes, unsigned int dim) {
 
@@ -110,5 +186,6 @@ Model<T>::~Model() {
     delete [] _weights;
 
 }
+ */
 
 #endif //MODEL_H

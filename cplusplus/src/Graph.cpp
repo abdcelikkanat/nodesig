@@ -73,6 +73,32 @@ void Graph::readEdgeList(string file_path, bool verbose) {
         _numOfEdges = tempEdgeContainer.size();
         _numOfNodes = maxNodeLabel - minNodeLabel + 1;
 
+        /*
+        // Store the edges in adjacency list format.
+        _adjList.resize(_numOfNodes);
+        while(!tempEdgeContainer.empty()) {
+            pair <unsigned int, pair <unsigned int, double>> triplet = tempEdgeContainer.back();
+            pair <unsigned int, double> &tempEdge = triplet.second;
+            if(triplet.first <= tempEdge.first)
+                _adjList[triplet.first].push_back(tempEdge);
+            tempEdgeContainer.pop_back();
+        }
+
+        // Sort the nodes in the adjacency list for efficiency.
+        for(unsigned int i=0; i<_numOfNodes; i++)
+            sort(_adjList[i].begin(), _adjList[i].end());
+
+        // Check if the graph contains a node of label 0
+        if(minNodeLabel != 0) {
+            cout << "\t- (Warning) It does not contain the node of label '0'" << endl;
+        }
+
+        if(verbose) {
+            cout << "\t- It contains " << _numOfNodes << " nodes." << endl;
+            cout << "\t- It contains " << _numOfEdges << " edges." << endl;
+        }
+         */
+
         // Store the edges in adjacency list format.
         _adjList.resize(_numOfNodes);
         while(!tempEdgeContainer.empty()) {
@@ -128,7 +154,7 @@ void Graph::writeEdgeList(string file_path, bool weighted) {
 
 }
 
-
+/*
 vector <int> Graph::getCommonNeighbours(int u, int v) {
 
     vector <int> common_node_list;
@@ -202,7 +228,9 @@ void Graph::vector2Adjlist(bool directed) {
         sort(adjlist[i].begin(), adjlist[i].end());
 
 }
+ */
 
+/*
 void Graph::readGraph(string file_path, string filetype, bool directed) {
 
     if( filetype == "edgelist" ) {
@@ -215,9 +243,8 @@ void Graph::readGraph(string file_path, string filetype, bool directed) {
         cout << "Unknown file type!" << endl;
     }
 
-
-
 }
+*/
 
 
 unsigned int Graph::getNumOfNodes() {
@@ -230,13 +257,9 @@ unsigned int Graph::getNumOfEdges() {
     return _numOfEdges;
 }
 
-void Graph::getEdges() {
 
-    for(long unsigned int i=0; i<edges.size(); i++) {
-        cout << edges[i][0] << " " << edges[i][1] << endl;
-    }
 
-}
+/*
 void Graph::printAdjList() {
 
     for(unsigned int i=0; i<num_of_nodes; i++) {
@@ -248,14 +271,14 @@ void Graph::printAdjList() {
     }
 
 }
+*/
+vector <vector <pair<unsigned int, double>>> Graph::getAdjList() {
 
-vector <vector <int>> Graph::getAdjList() {
-
-    return adjlist;
+    return this->_adjList;
 
 }
 
-
+/*
 vector <int> Graph::getDegreeSequence() {
 
     vector <int> degree_seq(num_of_nodes);
@@ -269,3 +292,4 @@ vector <int> Graph::getDegreeSequence() {
     return degree_seq;
 
 }
+ */

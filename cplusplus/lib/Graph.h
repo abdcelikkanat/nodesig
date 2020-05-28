@@ -8,7 +8,8 @@
 #include <vector>
 #include <algorithm>
 #include <limits>
-#include "Matrix.h"
+#include <Eigen/Sparse>
+//#include "Matrix.h"
 
 using namespace std;
 
@@ -23,36 +24,52 @@ private:
     unsigned int _numOfEdges;
 
 
-    __unused unsigned int num_of_nodes = 0;
-    __unused unsigned int num_of_edges = 0;
-    __unused vector <vector <int> > edges;
-    __unused vector <vector <int> > adjlist;
-
-
-    __unused void vector2Adjlist(bool directed);
+    //__unused unsigned int num_of_nodes = 0;
+    //__unused unsigned int num_of_edges = 0;
+    //__unused vector <vector <int> > edges;
+    //__unused vector <vector <int> > adjlist;
+    //__unused void vector2Adjlist(bool directed);
 
 public:
     Graph(bool directed);
     Graph();
     ~Graph();
 
-    vector <int> getCommonNeighbours(int u, int v);
+    //vector <int> getCommonNeighbours(int u, int v);
     void readEdgeList(string file_path, bool verbose);
     void writeEdgeList(string file_path, bool weighted);
     unsigned int getNumOfNodes();
     unsigned int getNumOfEdges();
-    template <typename T>
-    inline sparseMatrix<T> getAdjacencyMatrix(bool verbose);
+    //template <typename T>
+    //inline sparseMatrix<T> getAdjacencyMatrix(bool verbose);
 
-    __unused void readGraph(string file_path, string filetype, bool directed);
-    __unused void getEdges();
-    void printAdjList();
-    vector <int> getDegreeSequence();
-    __unused vector <vector <int>> getAdjList();
-    double getClusteringCoefficient(int v, int u);
+    //__unused void readGraph(string file_path, string filetype, bool directed);
+    template <typename T>
+    vector<Eigen::Triplet<T>> getEdges();
+    //void printAdjList();
+    //vector <int> getDegreeSequence();
+    vector <vector <pair<unsigned int, double>>> getAdjList();
+    //double getClusteringCoefficient(int v, int u);
 
 };
 
+template <typename T>
+inline vector<Eigen::Triplet<T>> Graph::getEdges() {
+
+    vector<Eigen::Triplet<T>> edges;
+
+    for (unsigned int node = 0; node < _numOfNodes; node++) {
+        for (unsigned int j = 0; j<_adjList[node].size(); j++) {
+            edges.push_back(Eigen::Triplet<T>(node, get<0>(_adjList[node][j]), (T)get<1>(_adjList[node][j])));
+            edges.push_back(Eigen::Triplet<T>(get<0>(_adjList[node][j]), node, (T)get<1>(_adjList[node][j])));
+
+        }
+    }
+
+    return edges;
+}
+
+/*
 template <typename T>
 inline sparseMatrix<T> Graph::getAdjacencyMatrix(bool verbose) {
     if(verbose)
@@ -80,6 +97,6 @@ inline sparseMatrix<T> Graph::getAdjacencyMatrix(bool verbose) {
 
     return adjacencyMatrix;
 }
-
+*/
 
 #endif //GRAPH_H

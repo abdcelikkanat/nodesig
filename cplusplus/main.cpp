@@ -1,27 +1,108 @@
+#include <Eigen/Sparse>
+#include <vector>
 #include <iostream>
 #include <string>
 #include "Graph.h"
-#include "Matrix.h"
-#include "src/Matrix.cpp"
+#include <chrono>
+#include <limits>
 #include "Model.h"
-#include "src/Model.cpp"
-
 using namespace std;
 
+void print_mat(Eigen::SparseMatrix<float, Eigen::RowMajor> mat) {
 
+    for(int i=0; i<mat.outerSize(); i++) {
+        for(Eigen::SparseMatrix<float, Eigen::RowMajor>::InnerIterator it(mat, i); it; ++it) {
+            cout << "(" << it.row() << "," << it.col() << ") " << it.value() << endl;
+        }
+    }
+
+
+}
+
+void normalize(Eigen::SparseMatrix<float, Eigen::RowMajor> &mat) {
+
+    float max_value, min_value;
+
+    max_value = numeric_limits<float>::min();
+    min_value = 0;
+
+    int num_of_rows = mat.innerSize();
+    int num_of_columns = mat.outerSize();
+
+    // Find min/max
+    for(int i=0; i<mat.outerSize(); i++) {
+        for(Eigen::SparseMatrix<float, Eigen::RowMajor>::InnerIterator it(mat, i); it; ++it) {
+            if(it.value() > max_value)
+                max_value = it.value();
+            if(it.value() < min_value)
+                min_value = it.value();
+        }
+    }
+    // App
+    for(int i=0; i<mat.outerSize(); i++) {
+        for(Eigen::SparseMatrix<float, Eigen::RowMajor>::InnerIterator it(mat, i); it; ++it) {
+            it.valueRef() = ( it.valueRef() - min_value ) / ( max_value - min_value );
+        }
+    }
+
+
+
+    // Find row sums
+    float *row_sums = new float[num_of_rows];
+
+    for(int i=0; i<mat.outerSize(); i++) {
+        for(Eigen::SparseMatrix<float, Eigen::RowMajor>::InnerIterator it(mat, i); it; ++it)
+            row_sums[it.row()] += it.value();
+    }
+    //App
+    for(int i=0; i<mat.outerSize(); i++) {
+        for(Eigen::SparseMatrix<float, Eigen::RowMajor>::InnerIterator it(mat, i); it; ++it)
+            it.valueRef() = it.valueRef()/row_sums[it.row()];
+    }
+
+    delete [] row_sums;
+
+}
+
+/*
+int main() {
+
+    int dim=4;
+    typedef Eigen::Triplet<float> T;
+    std::vector<T> tripletList;
+
+    tripletList.push_back(T(0,2, 3));
+    tripletList.push_back(T(1,1,5));
+    tripletList.push_back(T(2,0, 4));
+    tripletList.push_back(T(1,2, 1));
+
+    Eigen::SparseMatrix<float> mat(dim, dim);
+    mat.setFromTriplets(tripletList.begin(), tripletList.end());
+
+
+    print_mat(mat);
+
+    cout <<"---------------" << endl;
+    normalize(mat);
+
+    print_mat(mat);
+
+
+    return 0;
+}
+*/
 
 int main() {
-    std::cout << "Hello, World!" << std::endl;
 
-    //string dataset_path = "/Users/abdulkadir/workspace/nodesig/cplusplus/tests/karate.edgelist";
-    string dataset_path = "/Users/abdulkadir/workspace/datasets/Homo_sapiens_undirected.edgelist";
-    string dataset_path2 = "/Users/abdulkadir/workspace/nodesig/cplusplus/tests/output.edgelist";
+    string dataset_path = "/Users/abdulkadir/workspace/nodesig/cplusplus/tests/karate.edgelist";
+    //string dataset_path = "/Users/abdulkadir/workspace/datasets/Homo_sapiens_undirected.edgelist";
+    string embFilePath = "/Users/abdulkadir/workspace/nodesig/cplusplus/deneme.embedding";
 
     bool verbose = true;
     bool directed = false;
     unsigned int dim = 128;
     unsigned int walkLen = 5;
-    string embFilePath = "/Users/abdulkadir/workspace/nodesig/cplusplus/deneme.embedding";
+
 
     Graph g = Graph(directed);
     g.readEdgeList(dataset_path, verbose);
@@ -29,80 +110,48 @@ int main() {
     int unsigned numOfNodes = g.getNumOfNodes();
     int unsigned numOfEdges = g.getNumOfEdges();
 
-    /*
-    sparseMatrix<float> temp(4,4,1);
-    for(int i=0; i<4; i++)
-        for(int j=0; j<4; j++)
-            temp.insert(i, j,i*4+j+1);
-    temp.print(1);
-    auto temp2 = temp.transpose();
-    temp2.print(1);
-    */
+    //vector <vector <pair<unsigned int, double>>> adjList = g.getAdjList();
 
-    cout << numOfNodes << " " << numOfEdges << endl;
-    // Get getAdjacencyMatrix
-    sparseMatrix <float> adjMat = g.getAdjacencyMatrix<float>(verbose);
-    // Get the row sums
-    vector<Triplet<float>> rowSums = adjMat.getRowSums();
-    // Normalize the rows
-    cout << "Row sums ok!" << endl;
-    adjMat.scaleRows(rowSums);
-    // Get an identity matrix
-    cout << "Scaling ok!" << endl;
-    sparseEye<float> P(numOfNodes, numOfNodes);
-    // Zero matrix
-    sparseZero<float> sumMat(g.getNumOfNodes());
-    // Get the transposed transition matrix
-    sparseMatrix <float> transposedTransMat = adjMat.transpose();
+
+    typedef Eigen::Triplet<float> T;
+
+    // Get edge triplets
+    vector <Eigen::Triplet<float>> edgesTriplets = g.getEdges<float>();
+    // Construct the adjacency matrix
+    Eigen::SparseMatrix<float, Eigen::RowMajor> A(numOfNodes, numOfNodes);
+    A.setFromTriplets(edgesTriplets.begin(), edgesTriplets.end());
+
+    cout << "# of non-zero entries: " << A.nonZeros() << endl;
+
+    // Normalize the adjacency matrix
+    normalize(A);
+    // Construct zero matrix
+    Eigen::SparseMatrix<float, Eigen::RowMajor> S(numOfNodes, numOfNodes);
+    // Construct the identity matrix
+    Eigen::SparseMatrix<float, Eigen::RowMajor> P(numOfNodes, numOfNodes);
+    vector<T> PTripletList;
+    for(int i=0; i<numOfNodes; i++)
+        PTripletList.push_back(T(i, i,1));
+    P.setFromTriplets(PTripletList.begin(), PTripletList.end());
+
+    // Compress matrices
+    P.makeCompressed();
+    S.makeCompressed();
+
+    auto start_time = chrono::steady_clock::now();
     for(unsigned int l=0; l<walkLen; l++) {
         cout << "Iter: " << l << endl;
-        P.rowWiseMultiply(transposedTransMat);
-        sumMat.add(P);
+        P = P * A;
+        S = S + P;
     }
-
-
+    auto end_time = chrono::steady_clock::now();
+    cout << "Matrix computation time: " << chrono::duration_cast<chrono::seconds>(end_time - start_time).count() << endl;
     // Define the model
     Model<float> m(numOfNodes, dim);
     // Get the data matrix elements
-    //vector<Triplet<float>> &x = adjMat.getElements();
-    vector<Triplet<float>> x = sumMat.getElements();
+    // -> The matrix S
     // Encode all of them and write the embeddings into a file.
-    m.encodeAll(x, embFilePath);
+    m.encodeAll(S, embFilePath);
 
     return 0;
 }
-
-
-/*
-// Driver Code
-int main()
-{
-
-    // create two sparse matrices and insert values
-    sparse_matrix a(4, 4);
-    sparse_matrix b(4, 4);
-
-    a.insert(1, 2, 10);
-    a.insert(1, 4, 12);
-    a.insert(3, 3, 5);
-    a.insert(4, 1, 15);
-    a.insert(4, 2, 12);
-    b.insert(1, 3, 8);
-    b.insert(2, 4, 23);
-    b.insert(3, 3, 9);
-    b.insert(4, 1, 20);
-    b.insert(4, 2, 25);
-
-    // Output result
-    cout << "Addition: ";
-    a.add(b);
-    cout << "\nMultiplication: ";
-    a.multiply(b);
-    cout << "\nTranspose: ";
-    sparse_matrix atranspose = a.transpose();
-    atranspose.print();
-}
-
-// This code is contributed
-// by Bharath Vignesh J K
-*/
