@@ -41,22 +41,40 @@ void Graph::readEdgeList(string file_path, bool verbose) {
         double weight;
         unsigned int maxNodeLabel = 0;
         unsigned int minNodeLabel = numeric_limits<unsigned int>::max();
+        string token;
+        int count;
         string line;
         vector <pair<unsigned int, pair<unsigned int, double>>> tempEdgeContainer;
 
 
         while (std::getline(fs, line)) {
             stringstream linestream(line);
-
             // Read the edges
-            linestream >> u >> v >> weight;
+            //linestream >> u >> v >> weight;
 
+            count = 0;
+            weight = 1.0; // Default value
+            while(getline(linestream, token, ' ')) {
+                if(count == 0) {
+                    u = (unsigned int) stoul(token);
+                } else if (count == 1) {
+                    v = (unsigned int) stoul(token);
+                } else if(count == 2){
+                    weight = stod(token);
+                } else {
+                    cout << "Splitting problem!" << endl;
+                    throw;
+                }
+                count ++;
+            }
+
+            //cout << "=" << weight << endl;
             // If no weight is given, it is assumed that it is equal to 1.
-            if (weight == 0)
-                weight = 1.0;
+            //if (weight == 0)
+            //    weight = 1.0;
 
             // Add the edge to the list
-            pair <unsigned int, pair <unsigned int, double>> edge = make_tuple(u, make_tuple(v, weight));
+            pair <unsigned int, pair <unsigned int, double>> edge = make_pair(u, make_pair(v, weight));
             tempEdgeContainer.push_back(edge);
 
             // Find the maximum node label
@@ -70,7 +88,7 @@ void Graph::readEdgeList(string file_path, bool verbose) {
         fs.close();
 
         // Set the number of nodes and number of edges
-        _numOfEdges = tempEdgeContainer.size();
+        _numOfEdges = (unsigned int) tempEdgeContainer.size();
         _numOfNodes = maxNodeLabel - minNodeLabel + 1;
 
         /*

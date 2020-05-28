@@ -21,9 +21,9 @@ void print_mat(Eigen::SparseMatrix<float, Eigen::RowMajor> mat) {
 
 void normalize(Eigen::SparseMatrix<float, Eigen::RowMajor> &mat) {
 
-    float max_value, min_value;
+    float max_value, min_value, temp;
 
-    max_value = numeric_limits<float>::min();
+    max_value = 0;
     min_value = 0;
 
     int num_of_rows = mat.innerSize();
@@ -32,10 +32,12 @@ void normalize(Eigen::SparseMatrix<float, Eigen::RowMajor> &mat) {
     // Find min/max
     for(int i=0; i<mat.outerSize(); i++) {
         for(Eigen::SparseMatrix<float, Eigen::RowMajor>::InnerIterator it(mat, i); it; ++it) {
-            if(it.value() > max_value)
-                max_value = it.value();
-            if(it.value() < min_value)
-                min_value = it.value();
+            temp = it.value();
+            //cout << temp << endl;
+            if(temp > max_value)
+                max_value = temp;
+            if(temp < min_value)
+                min_value = temp;
         }
     }
     // App
@@ -44,7 +46,6 @@ void normalize(Eigen::SparseMatrix<float, Eigen::RowMajor> &mat) {
             it.valueRef() = ( it.valueRef() - min_value ) / ( max_value - min_value );
         }
     }
-
 
 
     // Find row sums
@@ -56,8 +57,10 @@ void normalize(Eigen::SparseMatrix<float, Eigen::RowMajor> &mat) {
     }
     //App
     for(int i=0; i<mat.outerSize(); i++) {
-        for(Eigen::SparseMatrix<float, Eigen::RowMajor>::InnerIterator it(mat, i); it; ++it)
-            it.valueRef() = it.valueRef()/row_sums[it.row()];
+        for(Eigen::SparseMatrix<float, Eigen::RowMajor>::InnerIterator it(mat, i); it; ++it) {
+            if(row_sums[it.row()] != 0)
+                it.valueRef() = it.valueRef() / row_sums[it.row()];
+        }
     }
 
     delete [] row_sums;
@@ -94,9 +97,9 @@ int main() {
 
 int main() {
 
-    string dataset_path = "/Users/abdulkadir/workspace/nodesig/cplusplus/tests/karate.edgelist";
+    string dataset_path = "/home/abdulkadir/Desktop/nodesig/cplusplus/tests/karate.edgelist";
     //string dataset_path = "/Users/abdulkadir/workspace/datasets/Homo_sapiens_undirected.edgelist";
-    string embFilePath = "/Users/abdulkadir/workspace/nodesig/cplusplus/deneme.embedding";
+    string embFilePath = "/home/abdulkadir/Desktop/nodesig/cplusplus/deneme.embedding";
 
     bool verbose = true;
     bool directed = false;
@@ -131,7 +134,7 @@ int main() {
     Eigen::SparseMatrix<float, Eigen::RowMajor> P(numOfNodes, numOfNodes);
     vector<T> PTripletList;
     for(int i=0; i<numOfNodes; i++)
-        PTripletList.push_back(T(i, i,1));
+        PTripletList.push_back(T(i, i, 1));
     P.setFromTriplets(PTripletList.begin(), PTripletList.end());
 
     // Compress matrices
@@ -148,10 +151,11 @@ int main() {
     cout << "Matrix computation time: " << chrono::duration_cast<chrono::seconds>(end_time - start_time).count() << endl;
     // Define the model
     Model<float> m(numOfNodes, dim);
+
     // Get the data matrix elements
     // -> The matrix S
     // Encode all of them and write the embeddings into a file.
     m.encodeAll(S, embFilePath);
-
+    /* */
     return 0;
 }

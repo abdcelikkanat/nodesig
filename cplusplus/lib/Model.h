@@ -43,6 +43,7 @@ Model<T>::Model(unsigned int numOfNodes, unsigned int dim) {
         for (int j=0; j < this->_dim; j++) {
             this->_weights(i, j) = distribution(generator);
         }
+
     }
 
 }
@@ -71,7 +72,7 @@ void Model<T>::encode(vector <Triplet <T>> x, bool *emb) {
 
 template<typename T>
 void Model<T>::encodeAll(Eigen::SparseMatrix<T, Eigen::RowMajor> &X, string filePath) {
-
+    //cout << "2: " << A.row(0) << endl;
     fstream fs(filePath, fstream::out);
     if(fs.is_open()) {
 
@@ -92,7 +93,7 @@ void Model<T>::encodeAll(Eigen::SparseMatrix<T, Eigen::RowMajor> &X, string file
             nodeProd = nodeVect * _weights;
 
             //for(int i=0; i<_numOfNodes; i++)
-            //cout << nodeVect.nonZeros() << endl;
+            //    cout << nodeVect.coeff(i) << endl;
 
             for(unsigned int d=0; d<_dim; d++) {
                 //cout << nodeProd.coeff(d) << endl;

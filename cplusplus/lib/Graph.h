@@ -62,7 +62,7 @@ inline vector<Eigen::Triplet<T>> Graph::getEdges() {
         for (unsigned int j = 0; j<_adjList[node].size(); j++) {
             edges.push_back(Eigen::Triplet<T>(node, get<0>(_adjList[node][j]), (T)get<1>(_adjList[node][j])));
             edges.push_back(Eigen::Triplet<T>(get<0>(_adjList[node][j]), node, (T)get<1>(_adjList[node][j])));
-
+            //cout << get<1>(_adjList[node][j]) << " ";
         }
     }
 
