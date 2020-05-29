@@ -65,7 +65,9 @@ void Graph::readEdgeList(string file_path, bool verbose) {
                     cout << "Splitting problem!" << endl;
                     throw;
                 }
-                count ++;
+                count++;
+
+
             }
 
             //cout << "=" << weight << endl;
@@ -124,7 +126,10 @@ void Graph::readEdgeList(string file_path, bool verbose) {
             pair <unsigned int, double> &tempEdge = triplet.second;
             if(triplet.first <= tempEdge.first)
                 _adjList[triplet.first].push_back(tempEdge);
+            else
+                _adjList[get<0>(tempEdge)].push_back(pair<unsigned int, double>(triplet.first, tempEdge.second));
             tempEdgeContainer.pop_back();
+
         }
 
         // Sort the nodes in the adjacency list for efficiency.
