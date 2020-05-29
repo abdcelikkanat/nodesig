@@ -6,6 +6,7 @@
 #include <chrono>
 #include <limits>
 #include "Model.h"
+#include <math.h>
 using namespace std;
 
 void print_mat(Eigen::SparseMatrix<float, Eigen::RowMajor> mat) {
@@ -106,6 +107,31 @@ void scale(Eigen::SparseMatrix<float, Eigen::RowMajor> &mat) {
 
 }
 
+
+void ppmi_matrix(Eigen::MatrixXf &Mat) {
+
+    auto rowSum = Mat.colwise().sum();
+    auto colSum = Mat.rowwise().sum();
+    auto totalSum = colSum.sum();
+    Eigen::MatrixXf prod(Mat.rows(), Mat.cols());
+    prod = colSum * rowSum;
+
+    for(unsigned int i=0; i<Mat.rows(); i++) {
+        for(unsigned int j=0; j<Mat.cols(); j++) {
+
+            if(prod.coeff(i,j) != 0) {
+                Mat(i, j) = log(totalSum * Mat(i, j) / prod(i, j) );
+                if(Mat(i, j)  < 0)
+                    Mat(i,j) = 0;
+            } else {
+                Mat(i,j) = 0;
+            }
+
+        }
+    }
+
+}
+
 int main2() {
 
     int dim=4;
@@ -168,12 +194,12 @@ int main2() {
     denek.noalias() = mat1 * mat2;
     cout << denek  << endl;
 
+    cout <<"---------------" << endl;
+    cout << mat << endl;
 
-    cout << mat << endl;
-    auto temp = mat.diagonal();
-    for(int i=0; i<temp.size(); i++)
-        temp.coeffRef(i) = 88;
-    cout << mat << endl;
+    //cout << mat.cwiseSign() << endl;
+    auto densemat = mat.toDense();
+    ppmi_matrix(densemat);
 
     return 0;
 }
@@ -230,26 +256,27 @@ int main() {
     P0.makeCompressed();
     X.makeCompressed();
 
-    auto start_time = chrono::steady_clock::now();
+    /* Random walk */
     for(unsigned int l=0; l<walkLen; l++) {
         cout << "Iter: " << l << endl;
         P = P * A;
         P = (cont_prob)*P + (1-cont_prob)*P0;
         X = X + P;
     }
-    auto end_time = chrono::steady_clock::now();
-    cout << "Matrix computation time: " << chrono::duration_cast<chrono::seconds>(end_time - start_time).count() << endl;
+    /* PPMI matrix */
+    Eigen::MatrixXf Y(numOfNodes, numOfNodes);
+    Y = X.toDense();
+    ppmi_matrix(Y);
+    /* PPMI matrix */
+
     // Define the model
     Model<float> m(numOfNodes, dim);
 
     // Get the data matrix elements
     // -> The matrix S
     // Encode all of them and write the embeddings into a file.
-    start_time = chrono::steady_clock::now();
-    m.encodeAll(X, embFilePath);
-    end_time = chrono::steady_clock::now();
-    cout << "Encoding time: " << chrono::duration_cast<chrono::seconds>(end_time - start_time).count() << endl;
 
+    m.encodeAll2(Y, embFilePath);
 
     return 0;
 }
