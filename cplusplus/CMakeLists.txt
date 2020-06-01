@@ -7,6 +7,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/)
 
 
 set(MKLROOT /opt/intel/mkl/)
+set(ENV{MKLROOT} /opt/intel/mkl/)
 set(MKL_FIND_DEBUG ON)
 set(MKL_USE_STATIC_LIBS ON)
 find_package(MKL REQUIRED)
