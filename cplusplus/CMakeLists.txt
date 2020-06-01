@@ -3,24 +3,33 @@ project(cplusplus)
 
 set(CMAKE_CXX_STANDARD 14)
 
-set(SOURCE_FILES src/Graph.cpp src/Model.cpp)
-set(LIB_FILES lib/Graph.h lib/Model.h)
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/)
+
+
+set(MKLROOT /opt/intel/mkl/)
+set(MKL_FIND_DEBUG ON)
+set(MKL_USE_STATIC_LIBS ON)
+find_package(MKL REQUIRED)
+if(MKL_FOUND)
+    message("MKL Found!")
+else()
+    message(WARNING "MKL libs not found")
+endif()
+
+
 
 include_directories(lib)
-
 include_directories(lib/eigen)
+include_directories(${MKL_INCLUDE_DIRS})
 
 add_subdirectory(src)
-add_subdirectory(tests)
 
-
+set(SOURCE_FILES src/deneme.cpp src/Graph.cpp)
+set(LIB_FILES lib/deneme.h lib/Graph.h lib/Model.h)
 
 add_executable(${CMAKE_PROJECT_NAME} main.cpp ${SOURCE_FILES} ${LIB_FILES})
-#target_link_libraries(${CMAKE_PROJECT_NAME}_run ${CMAKE_PROJECT_NAME}_lib)
 
-
-#add_executable(main main.cpp src/Graph.cpp src/Matrix.cpp src/Model.cpp lib/Graph.h lib/Matrix.h lib/Model.h)
-#add_executable(tests tests/test_graph.ddcpp src/Graph.cpp lib/Graph.h tests/test_sparse_matrix.cpp)
+target_link_libraries(${CMAKE_PROJECT_NAME} -L${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/lib -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl)
 
 
 # Clone Eigen Lib
@@ -31,3 +40,6 @@ if(NOT EXISTS ${EIGEN_DIR})
             COMMAND ${GIT_EXECUTABLE} clone https://gitlab.com/libeigen/eigen.git ${EIGEN_DIR}
     )
 endif()
+
+
+

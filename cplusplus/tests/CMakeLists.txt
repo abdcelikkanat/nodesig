@@ -14,8 +14,8 @@ endif()
 add_subdirectory(lib/googletest)
 
 
-set(SOURCE_FILES ../src/Graph.cpp ../src/Matrix.cpp)
-set(LIB_FILES ../lib/Graph.h ../lib/Matrix.h)
+set(SOURCE_FILES ../src/Graph.cpp)
+set(LIB_FILES ../lib/Graph.h)
 
 add_executable(tests test_matrix.cpp ${SOURCE_FILES} ${LIB_FILES})
 target_link_libraries(tests gtest gtest_main)
