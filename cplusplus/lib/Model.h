@@ -11,6 +11,7 @@
 #include <Eigen/Sparse>
 #include <Eigen/Dense>
 #include <bitset>
+#include <chrono>
 
 using namespace std;
 
@@ -27,6 +28,7 @@ public:
     //void encode(vector <Triplet <T>> x, bool *emb);
     void encodeAll(Eigen::SparseMatrix<T, Eigen::RowMajor> &X, string filePath);
     void encodeAll2(Eigen::MatrixXf &X, string filePath);
+    void encodeAll2(Eigen::SparseMatrix<T, Eigen::RowMajor> &X, string filePath);
     random_device _rd;
 
 };
@@ -133,6 +135,88 @@ void Model<T>::encodeAll(Eigen::SparseMatrix<T, Eigen::RowMajor> &X, string file
 
 
 template<typename T>
+void Model<T>::encodeAll2(Eigen::SparseMatrix<T, Eigen::RowMajor> &X, string filePath) {
+
+    if(_dim % 8 != 0) {
+        cout << "Dimension must be divisible by 8!" << endl;
+        throw;
+    }
+
+    fstream fs(filePath, fstream::out | fstream::binary);
+    if(fs.is_open()) {
+
+        T dimSum;
+        unsigned int idx = 0;
+        Eigen::VectorXf nodeProd;
+        bool e;
+        Eigen::MatrixXf nodeProdX(_numOfNodes, _dim);
+        string buffer;
+        //_weights.transpose();
+
+        cout << _numOfNodes << " - " << _dim << endl;
+        //bitset<2*sizeof(char)> b(5);
+        //unsigned int b1 = ;
+        fs.write(reinterpret_cast<const char *>(&_numOfNodes), 4);
+        //unsigned int b2 = 3; // number of bytes to read
+        fs.write(reinterpret_cast<const char *>(&_dim), 4);
+
+
+
+
+
+        //cout << X.rows() << " " << X.cols() << endl;
+        //cout << _weights.rows() << " " << _weights.cols() << endl;
+
+
+        auto start_time = chrono::steady_clock::now();
+        nodeProdX = X * _weights;
+        auto end_time = chrono::steady_clock::now();
+        cout << "Matrix comp time: " << chrono::duration_cast<chrono::seconds>(end_time - start_time).count() << endl;
+
+
+        for(unsigned int node=0; node<_numOfNodes; node++) {
+            Eigen::VectorXf nodeVect = nodeProdX.row(node);
+            //cout << X.row(node) << endl;
+            //cout << nodeVect.rows() << " " << nodeVect.cols() << endl;
+            //cout << X.rows() << " " << X.cols() << endl;
+            //nodeProd = nodeProdX.row(node); //nodeVect * _weights;
+            //nodeProd = nodeVect * _weights;
+
+            //vector<bool> bin(_dim, 0);
+            vector<uint8_t> bin(_dim/8, 0);
+
+
+            //fs << node << " ";
+            /*
+            buffer += to_string(node) + " ";
+            for(unsigned int d=0; d<_dim; d++) {
+                //cout << nodeProd.coeff(d) << endl;
+                if(nodeVect.coeff(d) > 0)
+                    buffer += "1 "; //fs << "1 ";
+                else
+                    buffer += "0 "; //fs << "0 ";
+            }
+            */
+            for (unsigned int d = 0; d < _dim; d++) {
+                bin[int(d/8)] <<= 1;
+                if (nodeVect.coeff(d) > 0)
+                    bin[int(d/8)] += 1;
+            }
+
+            copy(bin.begin(), bin.end(), std::ostreambuf_iterator<char>(fs));
+
+        }
+
+        fs.close();
+
+    } else {
+        cout << "An error occurred during opening the file!" << endl;
+    }
+
+}
+
+
+template<typename T>
 void Model<T>::encodeAll2(Eigen::MatrixXf &X, string filePath) {
 
     if(_dim % 8 != 0) {
@@ -212,6 +296,7 @@ void Model<T>::encodeAll2(Eigen::MatrixXf &X, string filePath) {
     }
 
 }
+
 
 /*
 template<typename T>

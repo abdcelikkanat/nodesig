@@ -19,15 +19,108 @@ void ppmi_matrix(Eigen::MatrixXf &Mat);
 int main() {
 
     //string dataset_path = "/Users/abdulkadir/workspace/nodesig/cplusplus/tests/karate.edgelist";
-    string dataset_path = "/Users/abdulkadir/workspace/nodesig/cplusplus/Homo_sapiens_renaissance.edgelist";
-    string embFilePath = "/Users/abdulkadir/workspace/nodesig/cplusplus/deneme.embedding";
-    //string dataset_path = "/home/abdulkadir/Desktop/datasets/Homo_sapiens_renaissance.edgelist";
-    //string embFilePath = "/home/abdulkadir/Desktop/nodesig/cplusplus/Homo_sapiens_renaissance.embedding";
+    //string dataset_path = "/Users/abdulkadir/workspace/nodesig/cplusplus/Homo_sapiens_renaissance.edgelist";
+    //string embFilePath = "/Users/abdulkadir/workspace/nodesig/cplusplus/deneme.embedding";
+
+    string dataset_path = "/home/abdulkadir/Desktop/datasets/Homo_sapiens_renaissance.edgelist";
+    string embFilePath = "/home/abdulkadir/Desktop/nodesig/cplusplus/Homo_sapiens_renaissance.embedding";
+    //string dataset_path = "/home/abdulkadir/Desktop/datasets/youtube_renaissance.edgelist";
+    //string embFilePath = "/home/abdulkadir/Desktop/nodesig/cplusplus/youtube_renaissance.embedding";
+
+    //string dataset_path = "/home/kadir/workspace/cplusplus/youtube_renaissance.edgelist";
+    //string embFilePath = "/home/kadir/workspace/cplusplus/youtube_renaissance.embedding";
+
 
     bool verbose = true;
     bool directed = false;
-    unsigned int dim = 128;//1024*8;
-    unsigned int walkLen = 3;
+    unsigned int dim = 1024*8; // 128
+    unsigned int walkLen = 1;
+    float cont_prob = 0.98;
+
+    Graph g = Graph(directed);
+    g.readEdgeList(dataset_path, verbose);
+    //g.writeEdgeList(dataset_path2, true);
+    int unsigned numOfNodes = g.getNumOfNodes();
+    int unsigned numOfEdges = g.getNumOfEdges();
+
+
+    typedef float T;
+
+    // Get edge triplets
+    vector <Triplet<T>> edgesTriplets = g.getEdges<T>();
+    // Construct the adjacency matrix
+    Eigen::SparseMatrix<float, Eigen::RowMajor> A(numOfNodes, numOfNodes);
+    A.setFromTriplets(edgesTriplets.begin(), edgesTriplets.end());
+
+    // Normalize the adjacency matrix
+    cout << "Scaling started!" << endl;
+    scale(A);
+    cout << "Scaling completed!" << endl;
+
+    // Construct zero matrix
+    Eigen::SparseMatrix<float, Eigen::RowMajor> X(numOfNodes, numOfNodes);
+
+    // Construct the identity matrix
+    Eigen::SparseMatrix<float, Eigen::RowMajor> P(numOfNodes, numOfNodes);
+    P.setIdentity();
+
+    // Construct another identity matrix
+    Eigen::SparseMatrix<float, Eigen::RowMajor> P0(numOfNodes, numOfNodes);
+    P0.setIdentity();
+
+    cout << "Compressigon started!" << endl;
+    // Compress matrices
+    P.makeCompressed();
+    P0.makeCompressed();
+    X.makeCompressed();
+    cout << "Compression finished!" << endl;
+
+    /* Random walk */
+    for(unsigned int l=0; l<walkLen; l++) {
+        cout << "Iter: " << l << endl;
+        P = P * A;
+        P = (cont_prob)*P + (1-cont_prob)*P0;
+        X = X + P;
+    }
+
+
+
+    // Get the PPMI matrix
+    // add a condition here to convert ppmi, burada is var
+    cout << "Y is aaigned started!" << endl;
+    SparseMatrix <T, RowMajor> Y(numOfNodes, numOfNodes);
+    Y = X; //Y.noalias() = X.toDense();
+    cout << "Y assingmened finished!" << endl;
+    //ppmi_matrix(Y);
+
+    cout << "Model is started!" << endl;
+    Model<T> m(numOfNodes, dim);
+    cout << "Model started!" << endl;
+
+    //cout << mat2 * mat2 << endl;
+    cout << "Encoding started!" << endl;
+    m.encodeAll2(Y, embFilePath);
+    cout << "Encoding finished!" << endl;
+
+    return 0;
+}
+
+
+int main2() {
+
+    //string dataset_path = "/Users/abdulkadir/workspace/nodesig/cplusplus/tests/karate.edgelist";
+    //string dataset_path = "/Users/abdulkadir/workspace/nodesig/cplusplus/Homo_sapiens_renaissance.edgelist";
+    //string embFilePath = "/Users/abdulkadir/workspace/nodesig/cplusplus/deneme.embedding";
+
+    //string dataset_path = "/home/abdulkadir/Desktop/datasets/Homo_sapiens_renaissance.edgelist";
+    //string embFilePath = "/home/abdulkadir/Desktop/nodesig/cplusplus/Homo_sapiens_renaissance.embedding";
+    string dataset_path = "/home/abdulkadir/Desktop/datasets/youtube_renaissance.edgelist";
+    string embFilePath = "/home/abdulkadir/Desktop/nodesig/cplusplus/youtube_renaissance.embedding";
+
+    bool verbose = true;
+    bool directed = false;
+    unsigned int dim = 1024*8; // 128
+    unsigned int walkLen = 1;
     float cont_prob = 0.98;
 
     Graph g = Graph(directed);
@@ -85,9 +178,12 @@ int main() {
     //cout << mat2 * mat2 << endl;
     m.encodeAll2(Y, embFilePath);
 
+
+    return 0;
 }
 
-int main2() {
+
+int main3() {
 
     int dim=4;
     typedef Eigen::Triplet<float> T;
@@ -116,10 +212,6 @@ int main2() {
     cout << mat1 * mat2 << endl;
 
     cout << "---------------" << endl;
-
-    deneme d(1000000);
-    d.carp(mat1, mat2);
-
 
     return 0;
 }
