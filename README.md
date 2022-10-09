@@ -8,7 +8,7 @@ As the scale of networks increases, most of the widely used learning-based graph
 **1.** You can compile the codes by typing the following commands:
 ```
 cd build
-cmake CMakeLists
+cmake CMakeLists.txt
 make all
 ```
 #### Learning Representations
@@ -26,5 +26,5 @@ make all
 A. Celikkanat, A. N. Papadopoulos and F. D. Malliaros, [NodeSig: Binary Node Embeddings via Random Walk Diffusion](.), The 2022 IEEE/ACM International Conference on Advances in Social Network Analysis and Mining, Istanbul, Turkey, 2022.
 
 
-#### Required Libraries
+#### Notes
 It might be required to install OpenMP library.
